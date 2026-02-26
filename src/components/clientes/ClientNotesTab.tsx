@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import { RichTextEditor } from '../ui/RichTextEditor'
 import { Save, Loader2 } from 'lucide-react'
 import type { NoteTab, ClientNote } from './types'
 import { upsertNote } from '../../lib/clientContents'
@@ -21,28 +22,31 @@ const TAB_TITLES: Record<NoteTab, { title: string; placeholder: string }> = {
 
 export function ClientNotesTab({ clientId, tab, notes, onNoteUpdate }: ClientNotesTabProps) {
   const existingNote = notes.find(n => n.tab === tab)
-  const [content, setContent] = useState(existingNote?.content || '')
+  const [tempNotes, setTempNotes] = useState(existingNote?.content || '')
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const cfg = TAB_TITLES[tab]
 
   useEffect(() => {
     const note = notes.find(n => n.tab === tab)
-    setContent(note?.content || '')
+    setTempNotes(note?.content || '')
     setLastSaved(null)
   }, [tab, notes])
 
-  function handleChange(value: string) {
-    setContent(value)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      // Only save if the content has actually changed from the initial/last saved state
+      // and if it's not empty (or if it was empty and now it's not)
+      if (tempNotes !== existingNote?.content) {
+        saveNote(tempNotes)
+      }
+    }, 1500) // Debounce time
 
-    // Auto-save com debounce de 1.5s
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      saveNote(value)
-    }, 1500)
-  }
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [tempNotes, existingNote?.content]) // Trigger when tempNotes changes
 
   async function saveNote(text: string) {
     setIsSaving(true)
@@ -58,8 +62,9 @@ export function ClientNotesTab({ clientId, tab, notes, onNoteUpdate }: ClientNot
   }
 
   async function handleManualSave() {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    await saveNote(content)
+    // Clear any pending auto-save debounce and save immediately
+    // (The useEffect will be triggered again after setTempNotes, but this ensures immediate save)
+    await saveNote(tempNotes)
   }
 
   return (
@@ -84,13 +89,14 @@ export function ClientNotesTab({ clientId, tab, notes, onNoteUpdate }: ClientNot
         </div>
       </div>
 
-      <textarea
-        value={content}
-        onChange={e => handleChange(e.target.value)}
-        placeholder={cfg.placeholder}
-        rows={18}
-        className="w-full bg-white border border-gray-200 rounded-2xl p-5 text-sm text-gray-700 leading-relaxed outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none shadow-sm placeholder:text-gray-300"
-      />
+      <div className="flex-1 min-h-[400px]">
+        <RichTextEditor
+          content={tempNotes}
+          onChange={setTempNotes}
+          placeholder={`Adicione notas, links de pastas do drive, preferências do cliente...\n\n- Horários preferidos\n- Paleta de cores\n- Restrições`}
+          minHeight="400px"
+        />
+      </div>
     </div>
   )
 }

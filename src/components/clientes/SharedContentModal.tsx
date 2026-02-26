@@ -1,6 +1,7 @@
 import { InstagramPreview, getMediaInfo, parseMediaUrls } from './ContentModal'
 import type { Client, ClientContent } from './types'
 import { X, Calendar, Link as LinkIcon } from 'lucide-react'
+import DOMPurify from 'dompurify'
 
 interface SharedContentModalProps {
   isOpen: boolean
@@ -15,8 +16,15 @@ function ReadOnlyTextSection({ title, contentValue }: { title: string, contentVa
       <div className="px-5 pt-5 pb-2">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{title}</p>
       </div>
-      <div className="px-5 pb-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-        {contentValue ? contentValue : <span className="text-gray-400 italic">Nenhum texto preenchido.</span>}
+      <div className="px-5 pb-4 text-sm text-gray-700 leading-relaxed">
+        {contentValue ? (
+          <div 
+            className="prose prose-sm max-w-none prose-a:text-purple-600 prose-a:no-underline hover:prose-a:underline"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contentValue) }} 
+          />
+        ) : (
+          <span className="text-gray-400 italic">Nenhum texto preenchido.</span>
+        )}
       </div>
     </div>
   )

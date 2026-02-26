@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   X, Trash2, Link as LinkIcon,
-  SmilePlus, Play, Image as ImageIcon, Save,
+  Play, Image as ImageIcon, Save,
   ChevronLeft, ChevronRight
 } from 'lucide-react'
 import type {
@@ -9,6 +9,8 @@ import type {
   ContentType, ContentStatus, ContentChannel, Client
 } from './types'
 import { createContent, updateContent, deleteContent, deriveStatus } from '../../lib/clientContents'
+import { RichTextEditor } from '../ui/RichTextEditor'
+import DOMPurify from 'dompurify'
 
 interface ContentModalProps {
   isOpen: boolean
@@ -102,49 +104,6 @@ function StatusBadge({ status, onChange }: { status: ContentStatus; onChange: (s
   )
 }
 
-// ─── Mini Rich-Text Toolbar ────────────────────────────────────────────────────
-function TextToolbar({ textareaRef }: { textareaRef: React.RefObject<HTMLTextAreaElement> }) {
-  function wrap(before: string, after: string) {
-    const el = textareaRef.current
-    if (!el) return
-    const { selectionStart: s, selectionEnd: e, value } = el
-    const selected = value.slice(s, e)
-    const newVal = value.slice(0, s) + before + selected + after + value.slice(e)
-    const nativeInput = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!
-    nativeInput.call(el, newVal)
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-    el.focus()
-    el.setSelectionRange(s + before.length, s + before.length + selected.length)
-  }
-
-  return (
-    <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-100 bg-white">
-      <button
-        onClick={() => wrap('**', '**')}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 transition-colors font-bold text-sm"
-        title="Negrito"
-      >B</button>
-      <button
-        onClick={() => wrap('_', '_')}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors italic text-sm"
-        title="Itálico"
-      >I</button>
-      <button
-        onClick={() => wrap('[', '](URL)')}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-        title="Link"
-      >
-        <LinkIcon className="w-4 h-4" />
-      </button>
-      <button
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-        title="Emoji"
-      >
-        <SmilePlus className="w-4 h-4" />
-      </button>
-    </div>
-  )
-}
 
 // ─── Instagram Preview ─────────────────────────────────────────────────────────
 export function InstagramPreview({ client, content }: { client?: Client | null; content: ClientContent | null | undefined }) {
@@ -287,10 +246,13 @@ export function InstagramPreview({ client, content }: { client?: Client | null; 
         {(content?.legenda_content || content?.tema_content) && (
           <div className="mt-2 flex flex-col gap-3 pb-1">
             {content?.legenda_content && (
-              <p className="text-[10px] text-gray-700 whitespace-pre-wrap leading-relaxed">
-                <span className="font-bold text-gray-900">{client?.social_handle?.replace('@', '') || client?.name}</span>{' '}
-                {content.legenda_content}
-              </p>
+              <div className="text-[10px] text-gray-700 leading-relaxed inline">
+                <span className="font-bold text-gray-900 mr-1">{client?.social_handle?.replace('@', '') || client?.name}</span>
+                <span 
+                  className="prose prose-sm max-w-none prose-p:inline prose-a:text-purple-600 prose-a:no-underline hover:prose-a:underline"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.legenda_content) }} 
+                />
+              </div>
             )}
             
             {content?.tema_content && (
@@ -299,7 +261,10 @@ export function InstagramPreview({ client, content }: { client?: Client | null; 
                   <span className="w-1 h-1 rounded-full bg-purple-500"></span>
                   Tema / Direcionamento
                 </p>
-                <p className="text-[10px] text-gray-700 whitespace-pre-wrap leading-relaxed">{content.tema_content}</p>
+                <div 
+                  className="text-[10px] text-gray-700 leading-relaxed prose prose-sm max-w-none prose-a:text-purple-600 prose-a:no-underline hover:prose-a:underline prose-p:m-0 prose-ul:m-0 prose-ul:pl-4 prose-ol:m-0 prose-ol:pl-4"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.tema_content) }}
+                />
               </div>
             )}
           </div>
@@ -361,7 +326,6 @@ function TemaTab({
   channel: ContentChannel; setChannel: (v: ContentChannel) => void
   contentType: ContentType; setContentType: (v: ContentType) => void
   scheduledDate: string; setScheduledDate: (v: string) => void
-  textareaRef: React.RefObject<HTMLTextAreaElement>
   ref1: string; setRef1: (v: string) => void
   ref2: string; setRef2: (v: string) => void
   ref3: string; setRef3: (v: string) => void
@@ -372,13 +336,11 @@ function TemaTab({
       {/* Tema da Publicação */}
       <div className="flex flex-col gap-2">
         <label className="text-sm font-semibold text-gray-700">Tema da Publicação</label>
-        <textarea
-          ref={textareaRef}
-          value={temaContent}
-          onChange={e => setTemaContent(e.target.value)}
+        <RichTextEditor
+          content={temaContent}
+          onChange={setTemaContent}
           placeholder="Descreva o tema do conteúdo..."
-          rows={4}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 leading-relaxed outline-none resize-none placeholder:text-gray-300 focus:ring-2 focus:ring-purple-300 focus:border-transparent transition"
+          minHeight="120px"
         />
       </div>
 
@@ -487,7 +449,6 @@ export function ContentModal({
 
   const [activeTab, setActiveTab] = useState<EditorTab>('tema')
   const [isSaving, setIsSaving] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null!)
 
   const isEditing = !!content
 
@@ -695,9 +656,7 @@ export function ContentModal({
             <div className="flex-1 mx-4 mb-4 bg-white rounded-2xl border border-gray-200/80 shadow-sm flex flex-col overflow-hidden min-h-[500px] md:min-h-0 md:bg-white md:mb-0">
 
               {/* Toolbar (for text tabs) */}
-              {activeTab !== 'midia' && (
-                <TextToolbar textareaRef={textareaRef} />
-              )}
+              {/* Toolbar removida pois o RichTextEditor já possui a sua própria */}
 
               {/* TEMA */}
               {activeTab === 'tema' && (
@@ -706,7 +665,6 @@ export function ContentModal({
                   channel={channel} setChannel={setChannel}
                   contentType={contentType} setContentType={setContentType}
                   scheduledDate={scheduledDate} setScheduledDate={setScheduledDate}
-                  textareaRef={textareaRef}
                   ref1={ref1} setRef1={setRef1}
                   ref2={ref2} setRef2={setRef2}
                   ref3={ref3} setRef3={setRef3}
@@ -719,13 +677,14 @@ export function ContentModal({
                   <div className="px-4 pt-4 pb-2">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Conteúdo</p>
                   </div>
-                  <textarea
-                    ref={textareaRef}
-                    value={conteudoContent}
-                    onChange={e => setConteudoContent(e.target.value)}
-                    placeholder={`Roteiro do conteúdo (gravar com tripé, falando para a câmera):\n\nEscreva aqui o roteiro, texto do carrossel, script do reels...`}
-                    className="flex-1 px-4 pb-4 text-sm text-gray-700 leading-relaxed outline-none resize-none placeholder:text-gray-300"
-                  />
+                  <div className="flex-1 px-4 pb-4">
+                    <RichTextEditor
+                      content={conteudoContent}
+                      onChange={setConteudoContent}
+                      placeholder={`Roteiro do conteúdo (gravar com tripé, falando para a câmera):\n\nEscreva aqui o roteiro, texto do carrossel, script do reels...`}
+                      minHeight="250px"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -816,13 +775,14 @@ export function ContentModal({
                   <div className="px-4 pt-4 pb-2">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Legenda</p>
                   </div>
-                  <textarea
-                    ref={textareaRef}
-                    value={legendaContent}
-                    onChange={e => setLegendaContent(e.target.value)}
-                    placeholder={`Escreva aqui a legenda que será publicada na rede social.\n\nInclua emojis, hashtags, chamada para ação...`}
-                    className="flex-1 px-4 pb-4 text-sm text-gray-700 leading-relaxed outline-none resize-none placeholder:text-gray-300"
-                  />
+                  <div className="flex-1 px-4 pb-4">
+                    <RichTextEditor
+                      content={legendaContent}
+                      onChange={setLegendaContent}
+                      placeholder={`Escreva aqui a legenda que será publicada na rede social.\n\nInclua emojis, hashtags, chamada para ação...`}
+                      minHeight="400px"
+                    />
+                  </div>
                 </div>
               )}
 
