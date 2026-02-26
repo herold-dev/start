@@ -1,0 +1,2 @@
+src/components/crm/LeadModal.tsx(5,37): error TS6133: 'Calendar' is declared but its value is never read.
+supabase/functions/manage-team/index.ts(11,14): error TS7006: Parameter 'req' implicitly has an 'any' type.
