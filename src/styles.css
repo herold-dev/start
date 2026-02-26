@@ -9,6 +9,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none; /* prevent iOS bounce */
 }
 
 code {
@@ -23,7 +24,8 @@ code {
   transition: width 0.3s ease, min-width 0.3s ease;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh; /* fallback */
+  height: 100dvh;
   background: white;
   border-right: 1px solid #f3f4f6;
   overflow: hidden;
@@ -243,7 +245,8 @@ code {
 /* ======= Dashboard Layout ======= */
 .dashboard-layout {
   display: flex;
-  height: 100vh;
+  height: 100vh; /* fallback */
+  height: 100dvh;
   overflow: hidden;
   background-color: #fafafa;
   font-family: var(--font-sans);
