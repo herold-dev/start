@@ -13,6 +13,7 @@ import {
   Video,
   Camera,
   Clock,
+  BookOpen
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,6 +25,7 @@ const ALL_MENU_ITEMS = [
   { icon: DollarSign, label: 'Financeiro', path: '/financeiro', permissionKey: 'financeiro' },
   { icon: TrendingUp, label: 'CRM', path: '/crm', permissionKey: 'crm' },
   { icon: Package, label: 'Serviços', path: '/servicos', permissionKey: 'servicos' },
+  { icon: BookOpen, label: 'Processos', path: '/processos', permissionKey: 'processos' },
   { icon: Video, label: 'Reuniões', path: '/reunioes', permissionKey: 'reunioes' },
   { icon: Camera, label: 'Captações', path: '/captacoes', permissionKey: 'captacoes' },
   { icon: Activity, label: 'Atividades', path: '/atividades', permissionKey: 'atividades' },

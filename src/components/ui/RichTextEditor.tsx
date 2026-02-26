@@ -37,7 +37,7 @@ export function RichTextEditor({ content, onChange, placeholder, minHeight = '15
     },
     editorProps: {
       attributes: {
-        class: `prose prose-sm max-w-none focus:outline-none min-h-[${minHeight}] px-4 py-3 relative`,
+        class: `prose prose-sm max-w-none focus:outline-none min-h-[${minHeight}] px-4 py-3 pb-8 relative`,
       },
     }
   })
@@ -110,7 +110,13 @@ export function RichTextEditor({ content, onChange, placeholder, minHeight = '15
       </div>
 
       {/* Editor Content */}
-      <div className="flex-1 overflow-y-auto cursor-text" onClick={() => editor.chain().focus().run()}>
+      <div 
+        className="cursor-text" 
+        onClick={() => {
+           // Only focus if the click was directly on the container, not on its children
+           editor.chain().focus().run()
+        }}
+      >
          <EditorContent editor={editor} />
       </div>
       

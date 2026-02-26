@@ -14,6 +14,7 @@ import ReunioesPage from './pages/reunioes';
 import CaptacoesPage from './pages/captacoes';
 import ConfiguracoesPage from './pages/configuracoes';
 import LoginPage from './pages/login';
+import ProcessosPage from './pages/processos';
 import PontoPage from './pages/ponto';
 import SharedCalendarPage from './pages/sharedCalendar';
 
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/reunioes" element={<ReunioesPage />} />
         <Route path="/captacoes" element={<CaptacoesPage />} />
         <Route path="/ponto" element={<PontoPage />} />
+        <Route path="/processos" element={<ProcessosPage />} />
         <Route path="/configuracoes" element={<AdminRoute><ConfiguracoesPage /></AdminRoute>} />
       </Route>
 
