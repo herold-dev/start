@@ -1,28 +1,31 @@
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { SharedContentCalendar } from '../components/clientes/SharedContentCalendar'
-import type { Client, ClientContent } from '../components/clientes/types'
-import { Calendar } from 'lucide-react'
+import { SharedInstagramMetrics } from '../components/clientes/SharedInstagramMetrics'
+import type { Client, ClientContent, InstagramMetric } from '../components/clientes/types'
+import { Calendar, BarChart2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+
+type PublicTab = 'calendario' | 'metricas'
 
 export default function SharedCalendarPage() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
-  const monthParam = searchParams.get('month') || new Date().toISOString().slice(0, 7) // YYYY-MM
+  const monthParam = searchParams.get('month') || new Date().toISOString().slice(0, 7)
   
   const [client, setClient] = useState<Client | null>(null)
   const [contents, setContents] = useState<ClientContent[]>([])
+  const [metrics, setMetrics] = useState<InstagramMetric[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<PublicTab>('calendario')
 
-  // O Date que controla a renderização do calendário
   const [currentDate, setCurrentDate] = useState(() => {
     const [year, month] = monthParam.split('-').map(Number)
     if (year && month) return new Date(year, month - 1, 1)
     return new Date()
   })
 
-  // Sincroniza currentDate com a URL se a URL mudar (voltar/avançar no navegador)
   useEffect(() => {
     const [y, m] = (searchParams.get('month') || '').split('-').map(Number)
     if (y && m) {
@@ -47,6 +50,7 @@ export default function SharedCalendarPage() {
 
         setClient(data.client)
         setContents(data.contents)
+        if (data.metrics) setMetrics(data.metrics)
       } catch (err: any) {
         console.error('Failed to load shared calendar:', err)
         setError('Não foi possível carregar o calendário. O link pode estar incorreto ou o cliente indisponível.')
@@ -60,14 +64,6 @@ export default function SharedCalendarPage() {
 
   function getInitials(name: string) {
     return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
-  }
-
-  // Permite ao cliente navegar entre meses via Picker 
-  // (faz nova chamada a Edge Function a cada navegação)
-  function handleDateChange(newDate: Date) {
-    setCurrentDate(newDate)
-    // idealmente atualizariamos a URL tbm p/ refletir, mas como é read-only, 
-    // deixar local no state já funciona bem pro cliente explorar
   }
 
   if (isLoading) {
@@ -95,7 +91,7 @@ export default function SharedCalendarPage() {
     <div className="min-h-screen bg-gray-50 font-sans">
       <div className="max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
         
-        {/* Header (Simplified versions of ClientDetailHeader) */}
+        {/* Header */}
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex items-center gap-5">
           {client.avatar_url ? (
             <img
@@ -115,7 +111,7 @@ export default function SharedCalendarPage() {
           <div className="flex flex-col">
             <h1 className="text-2xl font-bold text-gray-900 leading-none">{client.name}</h1>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="text-sm text-gray-500 font-medium">Calendário de Conteúdo</span>
+              <span className="text-sm text-gray-500 font-medium">Área do Cliente</span>
               <span className="w-1 h-1 rounded-full bg-gray-300" />
               {client.social_handle && (
                 <span className="text-sm text-gray-400">@{client.social_handle.replace('@', '')}</span>
@@ -124,15 +120,44 @@ export default function SharedCalendarPage() {
           </div>
         </div>
 
-        {/* Read-only Calendar */}
-        <SharedContentCalendar
-          client={client}
-          contents={contents}
-          currentDate={currentDate}
-          onDateChange={handleDateChange}
-        />
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-2">
+          <button
+            onClick={() => setActiveTab('calendario')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex-1 justify-center ${
+              activeTab === 'calendario'
+                ? 'bg-purple-100 text-purple-700 shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            Calendário de Conteúdo
+          </button>
+          <button
+            onClick={() => setActiveTab('metricas')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex-1 justify-center ${
+              activeTab === 'metricas'
+                ? 'bg-pink-100 text-pink-700 shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            }`}
+          >
+            <BarChart2 className="w-4 h-4" />
+            Métricas Instagram
+          </button>
+        </div>
 
-        {/* Start Digital Footer brand */}
+        {/* Tab content */}
+        {activeTab === 'calendario' ? (
+          <SharedContentCalendar
+            client={client}
+            contents={contents}
+            currentDate={currentDate}
+          />
+        ) : (
+          <SharedInstagramMetrics metrics={metrics} />
+        )}
+
+        {/* Footer */}
         <div className="text-center py-8">
            <p className="text-xs text-gray-400 font-medium flex items-center justify-center gap-1.5">
               Powered by 

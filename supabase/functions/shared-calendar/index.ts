@@ -67,10 +67,18 @@ serve(async (req) => {
       throw contentsErr
     }
 
+    // 3. Fetch all Instagram Metrics for this client (all periods, for comparison)
+    const { data: metrics } = await supabaseClient
+      .from('instagram_metrics')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('period', { ascending: false })
+
     // Return combined public-ready data payload
     const payload = {
       client,
-      contents: contents || []
+      contents: contents || [],
+      metrics: metrics || []
     }
 
     return new Response(JSON.stringify(payload), {

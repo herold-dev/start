@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ClientDetailHeader, type ClientTab } from '../components/clientes/ClientDetailHeader'
 import { ContentCalendar } from '../components/clientes/ContentCalendar'
 import { ClientNotesTab } from '../components/clientes/ClientNotesTab'
+import { InstagramMetricsTab } from '../components/clientes/InstagramMetricsTab'
 import { ClientModal } from '../components/clientes/ClientModal'
 import { fetchClients, deleteClient } from '../lib/clientes'
 import { fetchContents, fetchNotes } from '../lib/clientContents'
@@ -136,6 +137,8 @@ export default function ClienteDetalhePage() {
           onContentSave={handleContentSave}
           onContentDelete={handleContentDelete}
         />
+      ) : activeTab === 'metricas' ? (
+        <InstagramMetricsTab clientId={client.id} />
       ) : (
         <ClientNotesTab
           clientId={client.id}

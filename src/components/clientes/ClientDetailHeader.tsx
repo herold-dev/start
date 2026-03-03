@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Link as LinkIcon, Edit2, Trash2,
-  FileText
+  FileText, BarChart2
 } from 'lucide-react'
 import type { Client } from './types'
 import type { NoteTab } from './types'
 
-export type ClientTab = 'conteudo' | NoteTab
+export type ClientTab = 'conteudo' | 'metricas' | NoteTab
 
 interface ClientDetailHeaderProps {
   client: Client
@@ -18,6 +18,7 @@ interface ClientDetailHeaderProps {
 
 const TABS: { id: ClientTab; label: string; icon: React.ReactNode }[] = [
   { id: 'conteudo', label: 'Conteúdo', icon: <FileText className="w-4 h-4" /> },
+  { id: 'metricas', label: 'Métricas Instagram', icon: <BarChart2 className="w-4 h-4" /> },
 ]
 
 function getInitials(name: string) {

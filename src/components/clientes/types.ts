@@ -86,3 +86,24 @@ export interface ClientNote {
   content: string
   updated_at: string
 }
+
+/* ─── Instagram Metrics ───────────────────────────────────────────────── */
+
+export interface InstagramMetric {
+  id: string
+  client_id: string
+  period: string          // "YYYY-MM"
+  seguidores?: number
+  alcance?: number
+  impressoes?: number
+  visualizacoes?: number
+  interacoes?: number
+  cliques_perfil?: number
+  salvamentos?: number
+  compartilhamentos?: number
+  novos_seguidores?: number
+  created_at: string
+  updated_at: string
+}
+
+export type InstagramMetricInput = Omit<InstagramMetric, 'id' | 'created_at' | 'updated_at'>
