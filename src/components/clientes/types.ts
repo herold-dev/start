@@ -107,3 +107,23 @@ export interface InstagramMetric {
 }
 
 export type InstagramMetricInput = Omit<InstagramMetric, 'id' | 'created_at' | 'updated_at'>
+
+/* ─── Highlighted Posts (posts em destaque) ────────────────────────────── */
+
+export interface HighlightedPost {
+  id: string
+  client_id: string
+  content_id: string
+  period: string
+  highlight_reason?: string
+  highlight_metrics?: string
+  post_url?: string
+  sort_order?: number
+  created_at: string
+  // Joined from client_contents
+  content_title?: string
+  content_type?: ContentType
+  content_thumbnail?: string
+  content_status?: ContentStatus
+  content_scheduled_date?: string
+}

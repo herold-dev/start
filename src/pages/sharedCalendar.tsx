@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { SharedContentCalendar } from '../components/clientes/SharedContentCalendar'
 import { SharedInstagramMetrics } from '../components/clientes/SharedInstagramMetrics'
-import type { Client, ClientContent, InstagramMetric } from '../components/clientes/types'
+import type { Client, ClientContent, InstagramMetric, HighlightedPost } from '../components/clientes/types'
 import { Calendar, BarChart2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -16,6 +16,7 @@ export default function SharedCalendarPage() {
   const [client, setClient] = useState<Client | null>(null)
   const [contents, setContents] = useState<ClientContent[]>([])
   const [metrics, setMetrics] = useState<InstagramMetric[]>([])
+  const [highlightedPosts, setHighlightedPosts] = useState<HighlightedPost[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<PublicTab>('calendario')
@@ -51,6 +52,7 @@ export default function SharedCalendarPage() {
         setClient(data.client)
         setContents(data.contents)
         if (data.metrics) setMetrics(data.metrics)
+        if (data.highlightedPosts) setHighlightedPosts(data.highlightedPosts)
       } catch (err: any) {
         console.error('Failed to load shared calendar:', err)
         setError('Não foi possível carregar o calendário. O link pode estar incorreto ou o cliente indisponível.')
@@ -154,7 +156,7 @@ export default function SharedCalendarPage() {
             currentDate={currentDate}
           />
         ) : (
-          <SharedInstagramMetrics metrics={metrics} />
+          <SharedInstagramMetrics metrics={metrics} highlightedPosts={highlightedPosts} />
         )}
 
         {/* Footer */}

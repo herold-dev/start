@@ -74,11 +74,39 @@ serve(async (req) => {
       .eq('client_id', clientId)
       .order('period', { ascending: false })
 
+    // 4. Fetch highlighted posts with joined content data
+    const { data: highlightedPostsRaw } = await supabaseClient
+      .from('highlighted_posts')
+      .select(`
+        id, client_id, content_id, period, highlight_reason, highlight_metrics, post_url, sort_order, created_at,
+        client_contents!inner ( title, content_type, status, scheduled_date, midia_url )
+      `)
+      .eq('client_id', clientId)
+      .order('sort_order', { ascending: true })
+
+    const highlightedPosts = (highlightedPostsRaw || []).map((row: any) => ({
+      id: row.id,
+      client_id: row.client_id,
+      content_id: row.content_id,
+      period: row.period,
+      highlight_reason: row.highlight_reason,
+      highlight_metrics: row.highlight_metrics,
+      post_url: row.post_url,
+      sort_order: row.sort_order,
+      created_at: row.created_at,
+      content_title: row.client_contents?.title,
+      content_type: row.client_contents?.content_type,
+      content_thumbnail: row.client_contents?.midia_url,
+      content_status: row.client_contents?.status,
+      content_scheduled_date: row.client_contents?.scheduled_date,
+    }))
+
     // Return combined public-ready data payload
     const payload = {
       client,
       contents: contents || [],
-      metrics: metrics || []
+      metrics: metrics || [],
+      highlightedPosts
     }
 
     return new Response(JSON.stringify(payload), {

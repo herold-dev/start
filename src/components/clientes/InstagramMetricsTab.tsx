@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
-import { BarChart2, Save, CheckCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { BarChart2, Save, CheckCircle, ChevronLeft, ChevronRight, Loader2, Plus, Star, Trash2, Edit3, Award } from 'lucide-react'
 import { fetchMetrics, upsertMetric, METRIC_FIELDS } from '../../lib/instagramMetrics'
-import type { InstagramMetric } from './types'
+import { fetchHighlightedPosts, addHighlightedPost, updateHighlightedPost, removeHighlightedPost } from '../../lib/highlightedPosts'
+import { fetchContents } from '../../lib/clientContents'
+import type { InstagramMetric, HighlightedPost, ClientContent } from './types'
 
 interface Props {
   clientId: string
@@ -39,6 +41,17 @@ export function InstagramMetricsTab({ clientId }: Props) {
   const [savedOk, setSavedOk] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Highlighted posts state
+  const [highlights, setHighlights] = useState<HighlightedPost[]>([])
+  const [monthContents, setMonthContents] = useState<ClientContent[]>([])
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [newContentId, setNewContentId] = useState('')
+  const [newReason, setNewReason] = useState('')
+  const [newMetrics, setNewMetrics] = useState('')
+  const [newUrl, setNewUrl] = useState('')
+  const [isSavingHighlight, setIsSavingHighlight] = useState(false)
+
   // Load all metrics for this client
   useEffect(() => {
     setIsLoading(true)
@@ -47,6 +60,21 @@ export function InstagramMetricsTab({ clientId }: Props) {
       setIsLoading(false)
     })
   }, [clientId])
+
+  // Load highlighted posts
+  const loadHighlights = useCallback(() => {
+    fetchHighlightedPosts(clientId, selectedPeriod).then(setHighlights)
+  }, [clientId, selectedPeriod])
+
+  useEffect(() => { loadHighlights() }, [loadHighlights])
+
+  // Load month contents for the dropdown
+  useEffect(() => {
+    const [y, m] = selectedPeriod.split('-').map(Number)
+    const start = new Date(y, m - 1, 1).toISOString().split('T')[0]
+    const end = new Date(y, m, 0).toISOString().split('T')[0]
+    fetchContents(clientId, start, end).then(setMonthContents)
+  }, [clientId, selectedPeriod])
 
   // Populate form when period changes
   useEffect(() => {
@@ -85,6 +113,50 @@ export function InstagramMetricsTab({ clientId }: Props) {
     setIsSaving(false)
   }
 
+  // Highlighted posts handlers
+  async function handleAddHighlight() {
+    if (!newContentId) return
+    setIsSavingHighlight(true)
+    const saved = await addHighlightedPost(clientId, newContentId, selectedPeriod, newReason, newMetrics, newUrl)
+    if (saved) {
+      loadHighlights()
+      setShowAddForm(false)
+      setNewContentId('')
+      setNewReason('')
+      setNewMetrics('')
+      setNewUrl('')
+    }
+    setIsSavingHighlight(false)
+  }
+
+  async function handleUpdateHighlight(id: string) {
+    setIsSavingHighlight(true)
+    await updateHighlightedPost(id, newReason, newMetrics, newUrl)
+    loadHighlights()
+    setEditingId(null)
+    setNewReason('')
+    setNewMetrics('')
+    setNewUrl('')
+    setIsSavingHighlight(false)
+  }
+
+  async function handleRemoveHighlight(id: string) {
+    if (!confirm('Remover este post em destaque?')) return
+    await removeHighlightedPost(id)
+    loadHighlights()
+  }
+
+  function startEditing(h: HighlightedPost) {
+    setEditingId(h.id)
+    setNewReason(h.highlight_reason || '')
+    setNewMetrics(h.highlight_metrics || '')
+    setNewUrl(h.post_url || '')
+  }
+
+  // Posts available for highlighting (not already highlighted)
+  const highlightedContentIds = new Set(highlights.map(h => h.content_id))
+  const availableContents = monthContents.filter(c => !highlightedContentIds.has(c.id))
+
   // Find previous month metric for comparison in the history list
   const [selYear, selMonth] = selectedPeriod.split('-').map(Number)
   const prevPeriodDate = new Date(selYear, selMonth - 2, 1)
@@ -92,6 +164,12 @@ export function InstagramMetricsTab({ clientId }: Props) {
   const prevMetric = metrics.find(m => m.period === prevPeriod)
 
   const recentMetrics = metrics.slice(0, 6)
+
+  const CONTENT_TYPE_LABELS: Record<string, string> = {
+    carrossel: '📸 Carrossel',
+    estatico: '🖼️ Estático',
+    reels: '🎬 Reels',
+  }
 
   if (isLoading) {
     return (
@@ -248,6 +326,236 @@ export function InstagramMetricsTab({ clientId }: Props) {
           </div>
         </div>
       )}
+
+      {/* ─── Posts em Destaque ─────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-800 leading-none">Posts em Destaque</h3>
+              <p className="text-[11px] text-gray-400 mt-0.5">Selecione os posts que mais engajaram neste mês</p>
+            </div>
+          </div>
+          {!showAddForm && (
+            <button
+              onClick={() => { setShowAddForm(true); setEditingId(null) }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Adicionar
+            </button>
+          )}
+        </div>
+
+        {/* Add form */}
+        {showAddForm && (
+          <div className="bg-amber-50/50 rounded-xl border border-amber-100 p-4 mb-4">
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">Post do mês</label>
+                <select
+                  value={newContentId}
+                  onChange={e => setNewContentId(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all"
+                >
+                  <option value="">Selecione um post...</option>
+                  {availableContents.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.title} — {CONTENT_TYPE_LABELS[c.content_type] || c.content_type}
+                      {c.scheduled_date ? ` (${new Date(c.scheduled_date + 'T12:00:00').toLocaleDateString('pt-BR')})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {availableContents.length === 0 && (
+                  <p className="text-[11px] text-gray-400 mt-1">Nenhum post disponível neste mês (todos já estão em destaque ou não há conteúdos).</p>
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">Por que se destacou?</label>
+                <textarea
+                  value={newReason}
+                  onChange={e => setNewReason(e.target.value)}
+                  placeholder="Ex: Esse post gerou muito engajamento orgânico e atraiu novos seguidores..."
+                  rows={2}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all placeholder:text-gray-300 resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">Em quais métricas se destacou?</label>
+                <textarea
+                  value={newMetrics}
+                  onChange={e => setNewMetrics(e.target.value)}
+                  placeholder="Ex: Alcance +45%, 120 salvamentos, 89 compartilhamentos..."
+                  rows={2}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all placeholder:text-gray-300 resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">Link do Post (Insta)</label>
+                <input
+                  type="url"
+                  value={newUrl}
+                  onChange={e => setNewUrl(e.target.value)}
+                  placeholder="Ex: https://instagram.com/p/..."
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all placeholder:text-gray-300"
+                />
+              </div>
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  onClick={() => { setShowAddForm(false); setNewContentId(''); setNewReason(''); setNewMetrics(''); setNewUrl('') }}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddHighlight}
+                  disabled={!newContentId || isSavingHighlight}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90 transition-all disabled:opacity-50 shadow-sm"
+                >
+                  {isSavingHighlight ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Star className="w-3.5 h-3.5" />}
+                  Destacar Post
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* List of highlighted posts */}
+        {highlights.length === 0 && !showAddForm ? (
+          <div className="text-center py-8">
+            <div className="text-3xl mb-2">🌟</div>
+            <p className="text-sm text-gray-400">Nenhum post em destaque neste mês.</p>
+            <p className="text-xs text-gray-300 mt-0.5">Clique em "Adicionar" para destacar um post.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {highlights.map(h => (
+              <div key={h.id} className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100 p-4 transition-all hover:shadow-sm">
+                {editingId === h.id ? (
+                  /* Editing mode */
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Star className="w-4 h-4 text-amber-500" />
+                      <span className="text-sm font-bold text-gray-800">{h.content_title || 'Post sem título'}</span>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Por que se destacou?</label>
+                      <textarea
+                        value={newReason}
+                        onChange={e => setNewReason(e.target.value)}
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Em quais métricas?</label>
+                      <textarea
+                        value={newMetrics}
+                        onChange={e => setNewMetrics(e.target.value)}
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">Link do Post</label>
+                      <input
+                        type="url"
+                        value={newUrl}
+                        onChange={e => setNewUrl(e.target.value)}
+                        placeholder="Ex: https://instagram.com/p/..."
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition-all placeholder:text-gray-300"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 justify-end">
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 hover:bg-white transition-all"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => handleUpdateHighlight(h.id)}
+                        disabled={isSavingHighlight}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-all disabled:opacity-50"
+                      >
+                        {isSavingHighlight ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                        Salvar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Display mode */
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Star className="w-4 h-4 text-amber-500 shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-sm font-bold text-gray-800 block truncate">{h.content_title || 'Post sem título'}</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {h.content_type && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 font-semibold">
+                                {CONTENT_TYPE_LABELS[h.content_type] || h.content_type}
+                              </span>
+                            )}
+                            {h.content_scheduled_date && (
+                              <span className="text-[10px] text-gray-400">
+                                {new Date(h.content_scheduled_date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                              </span>
+                            )}
+                            {h.post_url ? (
+                              <a
+                                href={h.post_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-blue-500 hover:text-blue-700 font-semibold transition-colors flex items-center gap-0.5"
+                              >
+                                Ver no Instagram ↗
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-gray-400 font-medium italic">
+                                Sem link
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => startEditing(h)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-amber-100 text-gray-400 hover:text-amber-600 transition-all"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleRemoveHighlight(h.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    {h.highlight_reason && (
+                      <div className="mt-2.5 bg-white/70 rounded-lg px-3 py-2">
+                        <p className="text-[11px] font-semibold text-amber-600 mb-0.5">Por que se destacou</p>
+                        <p className="text-xs text-gray-700 leading-relaxed">{h.highlight_reason}</p>
+                      </div>
+                    )}
+                    {h.highlight_metrics && (
+                      <div className="mt-2 bg-white/70 rounded-lg px-3 py-2">
+                        <p className="text-[11px] font-semibold text-orange-600 mb-0.5">Métricas de destaque</p>
+                        <p className="text-xs text-gray-700 leading-relaxed">{h.highlight_metrics}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
