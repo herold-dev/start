@@ -58,7 +58,7 @@ serve(async (req) => {
       .from('client_contents')
       .select('id, title, description, content_type, status, channel, scheduled_date, tema_content, tema_status, conteudo_content, conteudo_status, midia_url, midia_status, legenda_content, legenda_status')
       .eq('client_id', clientId)
-      .in('status', ['aprovado', 'em_aprovacao'])
+      .in('status', ['aprovado', 'em_aprovacao', 'rascunho', 'ajuste'])
       .gte('scheduled_date', startDate)
       .lte('scheduled_date', endDate)
       .order('scheduled_date', { ascending: true })
@@ -114,7 +114,7 @@ serve(async (req) => {
       status: 200,
     })
 
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,

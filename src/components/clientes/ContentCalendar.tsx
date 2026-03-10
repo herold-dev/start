@@ -474,7 +474,7 @@ export function ContentCalendar({
               <div>
                 <h3 className="text-xl font-bold text-gray-900">Compartilhar Calendário</h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Apenas posts "Em Aprovação" ou "Aprovado" aparecerão no link.
+                  Todos os posts agendados na visão do mês selecionado ficarão disponíveis no link gerado.
                 </p>
               </div>
               <button onClick={() => setIsShareModalOpen(false)} className="bg-gray-50 hover:bg-gray-100 p-2 rounded-full text-gray-400">
