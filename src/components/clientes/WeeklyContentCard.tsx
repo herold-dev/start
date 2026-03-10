@@ -1,20 +1,18 @@
-import { Image, Film, LayoutGrid, Instagram, Youtube, Linkedin } from 'lucide-react'
+import { Image, Film, LayoutGrid } from 'lucide-react'
 import { deriveStatus } from '../../lib/clientContents'
 import type { ClientContent } from './types'
 
 // Mapeamento de formatos de conteúdo
 const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode }> = {
-  carrossel: { label: 'Carrossel', icon: <LayoutGrid className="w-3 h-3" /> },
-  estatico:  { label: 'Estático', icon: <Image className="w-3 h-3" /> },
-  reels:     { label: 'Reels', icon: <Film className="w-3 h-3" /> },
+  feed: { label: 'Feed', icon: <LayoutGrid className="w-3 h-3" /> },
+  story:  { label: 'Story', icon: <Image className="w-3 h-3" /> },
+  feed_e_story: { label: 'Feed e Story', icon: <LayoutGrid className="w-3 h-3" /> },
 }
 
-// Ícones opcionais de redes sociais baseados na string de `channel`
+// Ícones opcionais de mídia baseados na string de `channel`
 const CHANNEL_ICONS: Record<string, React.ReactNode> = {
-  instagram: <Instagram className="w-3 h-3 text-gray-700" />,
-  tiktok:    <Film className="w-3 h-3 text-gray-700" />, 
-  youtube:   <Youtube className="w-3 h-3 text-gray-700" />,
-  linkedin:  <Linkedin className="w-3 h-3 text-gray-700" />,
+  video: <Film className="w-3 h-3 text-gray-700" />,
+  imagem: <Image className="w-3 h-3 text-gray-700" />, 
 }
 
 // Configuração visual de cada status baseada no mockup
@@ -31,7 +29,7 @@ interface WeeklyContentCardProps {
 }
 
 export function WeeklyContentCard({ content, onClick }: WeeklyContentCardProps) {
-  const type = TYPE_CONFIG[content.content_type] || TYPE_CONFIG.carrossel
+  const type = TYPE_CONFIG[content.content_type] || TYPE_CONFIG.feed
   const derivedStatus = deriveStatus(content)
   const statusCfg = STATUS_CONFIG[derivedStatus]
 
@@ -58,7 +56,7 @@ export function WeeklyContentCard({ content, onClick }: WeeklyContentCardProps) 
      }
   }
 
-  const channelIcon = CHANNEL_ICONS[content.channel || ''] || <Instagram className="w-3 h-3 text-gray-700" /> // fallback
+  const channelIcon = CHANNEL_ICONS[content.channel || ''] || <Image className="w-3 h-3 text-gray-700" /> // fallback
 
   return (
     <button

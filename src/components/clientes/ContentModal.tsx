@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   X, Trash2, Link as LinkIcon,
   Play, Image as ImageIcon, Save,
@@ -118,7 +118,7 @@ export function InstagramPreview({ client, content }: { client?: Client | null; 
     return name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '??'
   }
 
-  const isReels = content?.content_type === 'reels'
+  const isReels = content?.content_type === 'story' || content?.content_type === 'feed_e_story'
   const urls = parseMediaUrls(content?.midia_url)
   const isCarousel = urls.length > 1
 
@@ -169,14 +169,15 @@ export function InstagramPreview({ client, content }: { client?: Client | null; 
             )
           ) : (
             <div className="flex flex-col items-center gap-2 text-gray-400">
-              {isReels ? (
+              {content?.channel === 'video' ? (
                 <Play className="w-10 h-10 opacity-40" />
               ) : (
                 <ImageIcon className="w-10 h-10 opacity-40" />
               )}
               <p className="text-xs font-medium opacity-60">
-                {content?.content_type === 'carrossel' ? 'Carrossel' :
-                 content?.content_type === 'reels' ? 'Reels' : 'Estático'}
+                {content?.content_type === 'feed' ? 'Feed' :
+                 content?.content_type === 'story' ? 'Story' :
+                 content?.content_type === 'feed_e_story' ? 'Feed e Story' : 'Conteúdo'}
               </p>
             </div>
           )
@@ -319,7 +320,6 @@ function TemaTab({
   channel, setChannel,
   contentType, setContentType,
   scheduledDate, setScheduledDate,
-  textareaRef,
   ref1, setRef1, ref2, setRef2, ref3, setRef3,
 }: {
   temaContent: string; setTemaContent: (v: string) => void
@@ -380,19 +380,17 @@ function TemaTab({
         </div>
       </div>
 
-      {/* Rede + Formato */}
+      {/* Mídia + Formato */}
       <div className="flex items-center gap-4 text-sm text-gray-600">
         <span>
-          <span className="font-medium text-gray-500 mr-1">Redes:</span>
+          <span className="font-medium text-gray-500 mr-1">Mídia:</span>
           <select
             value={channel}
             onChange={e => setChannel(e.target.value as ContentChannel)}
             className="font-semibold text-gray-800 bg-transparent outline-none cursor-pointer border-b border-dashed border-gray-300 hover:border-purple-400 transition"
           >
-            <option value="instagram">instagram</option>
-            <option value="tiktok">tiktok</option>
-            <option value="youtube">youtube</option>
-            <option value="linkedin">linkedin</option>
+            <option value="video">Vídeo</option>
+            <option value="imagem">Imagens</option>
           </select>
         </span>
         <span>
@@ -402,9 +400,9 @@ function TemaTab({
             onChange={e => setContentType(e.target.value as ContentType)}
             className="px-2 py-0.5 rounded-full border border-gray-300 text-xs font-semibold text-gray-700 bg-white outline-none cursor-pointer hover:border-purple-400 transition"
           >
-            <option value="reels">Reels</option>
-            <option value="carrossel">Carrossel</option>
-            <option value="estatico">Estático</option>
+            <option value="feed">Feed</option>
+            <option value="story">Story</option>
+            <option value="feed_e_story">Feed e Story</option>
           </select>
         </span>
         <span>
@@ -426,8 +424,8 @@ export function ContentModal({
   isOpen, onClose, clientId, client, content, defaultDate, onSave, onDelete
 }: ContentModalProps) {
   const [title, setTitle] = useState('')
-  const [contentType, setContentType] = useState<ContentType>('carrossel')
-  const [channel, setChannel] = useState<ContentChannel>('instagram')
+  const [contentType, setContentType] = useState<ContentType>('feed')
+  const [channel, setChannel] = useState<ContentChannel>('imagem')
   const [scheduledDate, setScheduledDate] = useState('')
   const [description, setDescription] = useState('')
 
@@ -472,8 +470,8 @@ export function ContentModal({
     } else {
       setTitle('')
       setDescription('')
-      setContentType('carrossel')
-      setChannel('instagram')
+      setContentType('feed')
+      setChannel('imagem')
       setScheduledDate(defaultDate || '')
       setTemaContent('')
       setTemaStatus('rascunho')
@@ -600,7 +598,7 @@ export function ContentModal({
   if (!isOpen) return null
 
   const previewContent = buildPreviewContent()
-  const isReels = contentType === 'reels'
+  const isReels = contentType === 'story' || contentType === 'feed_e_story'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">

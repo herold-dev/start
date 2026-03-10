@@ -36,9 +36,9 @@ export type ClientInput = Omit<Client, 'id' | 'created_at'>
 
 /* ─── Content Calendar ────────────────────────────────────────────────── */
 
-export type ContentType = 'carrossel' | 'estatico' | 'reels'
+export type ContentType = 'feed' | 'story' | 'feed_e_story'
 export type ContentStatus = 'rascunho' | 'em_aprovacao' | 'ajuste' | 'aprovado'
-export type ContentChannel = 'instagram' | 'tiktok' | 'youtube' | 'linkedin'
+export type ContentChannel = 'video' | 'imagem'
 
 export interface ClientContent {
   id: string

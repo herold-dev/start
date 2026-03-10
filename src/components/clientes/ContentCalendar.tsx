@@ -26,11 +26,20 @@ const STATUS_LABELS: { key: ContentStatus; label: string; color: string }[] = [
 ]
 
 const CHANNEL_OPTIONS: { value: string; label: string }[] = [
-  { value: '', label: 'Todos os canais' },
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'tiktok', label: 'TikTok' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'linkedin', label: 'LinkedIn' },
+  { value: '', label: 'Todas as mídias' },
+  { value: 'video', label: 'Vídeo' },
+  { value: 'imagem', label: 'Imagem' },
+]
+
+const FORMAT_LABELS = [
+  { key: 'feed', label: 'Feed' },
+  { key: 'story', label: 'Story' },
+  { key: 'feed_e_story', label: 'Feed/Story' },
+]
+
+const MEDIA_LABELS = [
+  { key: 'video', label: 'Vídeo' },
+  { key: 'imagem', label: 'Imagem' },
 ]
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
@@ -96,10 +105,35 @@ export function ContentCalendar({
 
   // Stats — derivados dos status individuais das abas
   const stats = useMemo(() => {
-    const s: Record<string, number> = { rascunho: 0, em_aprovacao: 0, ajuste: 0, aprovado: 0 }
+    const s: Record<string, number> = { 
+      rascunho: 0, em_aprovacao: 0, ajuste: 0, aprovado: 0,
+      total: 0, feed: 0, story: 0, feed_e_story: 0, video: 0, imagem: 0
+    }
     contents.forEach(c => {
       const derived = deriveStatus(c)
       s[derived] = (s[derived] || 0) + 1
+      
+      s.total++
+      // Contabilizando formatos e mídias
+      const type = c.content_type as string
+      
+      if (type === 'reels' || type === 'story') {
+        s.story = (s.story || 0) + 1
+      }
+      if (type === 'feed' || type === 'carrossel' || type === 'estatico') {
+        s.feed = (s.feed || 0) + 1
+      }
+      if (type === 'feed_e_story') {
+        s.feed_e_story = (s.feed_e_story || 0) + 1
+      }
+      
+      const ch = c.channel as string
+      if (ch === 'video' || ch === 'tiktok' || ch === 'youtube') {
+        s.video = (s.video || 0) + 1 
+      }
+      if (ch === 'imagem' || ch === 'instagram' || ch === 'linkedin') {
+        s.imagem = (s.imagem || 0) + 1
+      }
     })
     return s
   }, [contents])
@@ -209,13 +243,41 @@ export function ContentCalendar({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <MonthPicker currentDate={currentDate} onChange={onDateChange} />
 
-        <div className="flex items-center gap-5">
-          {STATUS_LABELS.map(s => (
-            <div key={s.key} className="text-center">
-              <p className={`text-xl font-bold ${s.color}`}>{stats[s.key] || 0}</p>
-              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{s.label}</p>
+        <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+          <div className="flex items-center gap-4">
+            {STATUS_LABELS.map(s => (
+              <div key={s.key} className="text-center">
+                <p className={`text-xl font-bold ${s.color}`}>{stats[s.key] || 0}</p>
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          
+          <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <p className="text-xl font-bold text-gray-800">{stats.total || 0}</p>
+              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Total</p>
             </div>
-          ))}
+            {FORMAT_LABELS.map(f => (
+              <div key={f.key} className="text-center">
+                <p className="text-xl font-bold text-gray-700">{stats[f.key] || 0}</p>
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{f.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
+
+          <div className="flex items-center gap-4">
+            {MEDIA_LABELS.map(m => (
+              <div key={m.key} className="text-center">
+                <p className="text-xl font-bold text-gray-700">{stats[m.key] || 0}</p>
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{m.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
