@@ -4,6 +4,7 @@ import { ClientDetailHeader, type ClientTab } from '../components/clientes/Clien
 import { ContentCalendar } from '../components/clientes/ContentCalendar'
 import { ClientNotesTab } from '../components/clientes/ClientNotesTab'
 import { InstagramMetricsTab } from '../components/clientes/InstagramMetricsTab'
+import { ClientPasswords } from '../components/clientes/ClientPasswords'
 import { ClientModal } from '../components/clientes/ClientModal'
 import { fetchClients, deleteClient } from '../lib/clientes'
 import { fetchContents, fetchNotes } from '../lib/clientContents'
@@ -139,6 +140,8 @@ export default function ClienteDetalhePage() {
         />
       ) : activeTab === 'metricas' ? (
         <InstagramMetricsTab clientId={client.id} />
+      ) : activeTab === 'senhas' ? (
+        <ClientPasswords clientId={client.id} />
       ) : (
         <ClientNotesTab
           clientId={client.id}
