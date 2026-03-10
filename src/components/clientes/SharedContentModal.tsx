@@ -1,6 +1,6 @@
-import { InstagramPreview, getMediaInfo, parseMediaUrls } from './ContentModal'
+import { getMediaInfo, parseMediaUrls } from './ContentModal'
 import type { Client, ClientContent } from './types'
-import { X, Calendar, Link as LinkIcon } from 'lucide-react'
+import { X, Link as LinkIcon } from 'lucide-react'
 import DOMPurify from 'dompurify'
 
 interface SharedContentModalProps {
@@ -85,12 +85,11 @@ function ReadOnlyMediaSection({ urls }: { urls: string[] }) {
 export function SharedContentModal({
   isOpen,
   onClose,
-  client,
+  client: _client, // Mantido apenas por compatibilidade com Props
   content
 }: SharedContentModalProps) {
   if (!isOpen || !content) return null
 
-  const isReels = content.content_type === 'reels'
   const midiaUrls = parseMediaUrls(content?.midia_url)
 
   return (
@@ -107,12 +106,7 @@ export function SharedContentModal({
               {content.title}
             </h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {content.scheduled_date && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-600 uppercase tracking-wide">
-                  <Calendar className="w-3 h-3" />
-                  {new Date(content.scheduled_date + 'T12:00:00').toLocaleDateString('pt-BR')}
-                </span>
-              )}
+
               {content.status && (
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-widest ${
                   content.status === 'aprovado' ? 'bg-emerald-100 text-emerald-700' :
@@ -131,13 +125,7 @@ export function SharedContentModal({
         {/* ── Body ─────────────────────────────────────────────────── */}
         <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden gap-0">
 
-          {/* ── Left: Instagram Preview ─────────────────────────────── */}
-          <div className="flex flex-col items-center justify-start shrink-0 bg-white border-b md:border-b-0 md:border-r border-gray-200/60 py-6 px-5 w-full md:w-auto h-auto md:h-full md:overflow-y-auto">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Preview (Aprovação Visual)</p>
-            <div className="w-full max-w-[320px] md:max-w-none" style={{ width: isReels ? '320px' : '300px' }}>
-              <InstagramPreview client={client} content={content} />
-            </div>
-          </div>
+
 
           {/* ── Right: Details using Original Layout Native Styles ──────────────────────────────────────── */}
           <div className="flex-1 flex flex-col overflow-visible md:overflow-y-auto bg-white">
