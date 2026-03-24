@@ -12,6 +12,7 @@ import { Clock, Plus, Search, ChevronDown, LogOut, CheckCircle2 } from 'lucide-r
 
 export default function PontoPage() {
   const { user } = useAuth();
+  const isAdmin = user?.email === 'renata@startdigital.com' || user?.user_metadata?.role === 'admin';
   
   const [registroHoje, setRegistroHoje] = useState<RegistroPonto | null>(null);
   const [historico, setHistorico] = useState<RegistroPonto[]>([]);
@@ -38,7 +39,7 @@ export default function PontoPage() {
       setLoading(true);
       const [hoje, hist] = await Promise.all([
         getRegistroHoje(),
-        getHistoricoPonto()
+        getHistoricoPonto(isAdmin)
       ]);
       setRegistroHoje(hoje);
       setHistorico(hist);
@@ -51,7 +52,7 @@ export default function PontoPage() {
 
   useEffect(() => {
     fetchData();
-  }, [user]);
+  }, [user, isAdmin]);
 
   const handleEntrada = async () => {
     if (saving) return;

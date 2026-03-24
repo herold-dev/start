@@ -34,10 +34,60 @@ export function deriveStatus(c: Pick<ClientContent, 'tema_status' | 'conteudo_st
     c.legenda_status  || 'rascunho',
   ]
 
+  // Se pelo menos um sub-status for 'postado' → post está postado
+  if (statuses.includes('postado'))      return 'postado'
   if (statuses.includes('ajuste'))       return 'ajuste'
   if (statuses.includes('em_aprovacao')) return 'em_aprovacao'
   if (statuses.every(s => s === 'aprovado')) return 'aprovado'
   return 'rascunho'
+}
+
+/* ─── Content Stats ────────────────────────────────────────────────────── */
+
+export interface ContentStats {
+  total: number
+  aprovados: number
+  postados: number
+  faltam: number
+}
+
+export async function fetchContentStats(clientId: string): Promise<ContentStats> {
+  const { data, error } = await supabase
+    .from('client_contents')
+    .select('status')
+    .eq('client_id', clientId)
+
+  if (error || !data) return { total: 0, aprovados: 0, postados: 0, faltam: 0 }
+
+  const total = data.length
+  const aprovados = data.filter(r => r.status === 'aprovado').length
+  const postados = data.filter(r => r.status === 'postado').length
+  return { total, aprovados, postados, faltam: aprovados }
+}
+
+export async function fetchAllClientsContentStats(): Promise<Record<string, ContentStats>> {
+  const { data, error } = await supabase
+    .from('client_contents')
+    .select('client_id, status')
+
+  if (error || !data) return {}
+
+  const map: Record<string, ContentStats> = {}
+
+  for (const row of data) {
+    const cid = row.client_id
+    if (!map[cid]) map[cid] = { total: 0, aprovados: 0, postados: 0, faltam: 0 }
+    map[cid].total++
+    if (row.status === 'aprovado') map[cid].aprovados++
+    if (row.status === 'postado')  map[cid].postados++
+  }
+
+  // faltam = aprovados (ainda não foram marcados como postados)
+  for (const cid of Object.keys(map)) {
+    map[cid].faltam = map[cid].aprovados
+  }
+
+  return map
 }
 
 /* ─── Contents CRUD ───────────────────────────────────────────────────── */

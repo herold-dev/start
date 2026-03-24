@@ -7,7 +7,7 @@ import { InstagramMetricsTab } from '../components/clientes/InstagramMetricsTab'
 import { ClientPasswords } from '../components/clientes/ClientPasswords'
 import { ClientModal } from '../components/clientes/ClientModal'
 import { fetchClients, deleteClient } from '../lib/clientes'
-import { fetchContents, fetchNotes } from '../lib/clientContents'
+import { fetchContents, fetchNotes, fetchContentStats, type ContentStats } from '../lib/clientContents'
 import type { Client, ClientContent, ClientNote, NoteTab } from '../components/clientes/types'
 
 export default function ClienteDetalhePage() {
@@ -17,6 +17,7 @@ export default function ClienteDetalhePage() {
   const [client, setClient] = useState<Client | null>(null)
   const [contents, setContents] = useState<ClientContent[]>([])
   const [notes, setNotes] = useState<ClientNote[]>([])
+  const [stats, setStats] = useState<ContentStats>({ total: 0, aprovados: 0, postados: 0, faltam: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<ClientTab>('conteudo')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -36,8 +37,12 @@ export default function ClienteDetalhePage() {
         }
         setClient(found)
 
-        const n = await fetchNotes(id!)
+        const [n, s] = await Promise.all([
+          fetchNotes(id!),
+          fetchContentStats(id!),
+        ])
         setNotes(n)
+        setStats(s)
       } finally {
         setIsLoading(false)
       }
@@ -62,12 +67,16 @@ export default function ClienteDetalhePage() {
   const handleContentSave = useCallback((saved: ClientContent) => {
     setContents(prev => {
       const idx = prev.findIndex(c => c.id === saved.id)
+      let next: ClientContent[]
       if (idx >= 0) {
-        const next = [...prev]
+        next = [...prev]
         next[idx] = saved
-        return next
+      } else {
+        next = [...prev, saved]
       }
-      return [...prev, saved]
+      // Recalcular stats a partir do array atualizado (todos os posts em memória)
+      fetchContentStats(saved.client_id).then(setStats)
+      return next
     })
   }, [])
 
@@ -125,6 +134,7 @@ export default function ClienteDetalhePage() {
         onTabChange={setActiveTab}
         onEdit={() => setIsEditModalOpen(true)}
         onDelete={handleDeleteClient}
+        stats={stats}
       />
 
       {/* Tab content */}

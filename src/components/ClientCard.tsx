@@ -1,10 +1,12 @@
 import type { Client } from './clientes/types'
+import type { ContentStats } from '../lib/clientContents'
 
 export type { Client }
 
 interface ClientCardProps {
   client: Client
   onClick: (client: Client) => void
+  stats?: ContentStats
 }
 
 function getInitials(name: string): string {
@@ -22,7 +24,7 @@ const PAY_LABEL: Record<string, string> = {
   parcelado: 'Parcelado',
 }
 
-export function ClientCard({ client, onClick }: ClientCardProps) {
+export function ClientCard({ client, onClick, stats }: ClientCardProps) {
   const {
     name, social_handle, segment, status, avatar_url,
     gradient_from, gradient_to, service_name, contract_value, payment_type,
@@ -88,6 +90,30 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
             <span className="bg-gray-100/80 text-gray-600 text-[11px] px-2.5 py-1 rounded-md font-semibold tracking-wide border border-gray-200/60">
               {segment}
             </span>
+          </div>
+        )}
+
+        {/* Stats de Posts */}
+        {stats && stats.total > 0 && (
+          <div className="mt-3 ml-4 flex flex-wrap gap-1.5">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200/60">
+              📄 {stats.total} posts
+            </span>
+            {stats.aprovados > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                ✓ {stats.aprovados} aprovados
+              </span>
+            )}
+            {stats.postados > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200/60">
+                🚀 {stats.postados} postados
+              </span>
+            )}
+            {stats.faltam > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200/60">
+                ⏳ {stats.faltam} a postar
+              </span>
+            )}
           </div>
         )}
 

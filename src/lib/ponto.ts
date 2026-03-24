@@ -96,7 +96,7 @@ export async function registrarSaida(id: string, descricao: string): Promise<Reg
   return data as RegistroPonto;
 }
 
-export async function getHistoricoPonto(): Promise<RegistroPonto[]> {
+export async function getHistoricoPonto(isAdmin = false): Promise<RegistroPonto[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
 
@@ -105,6 +105,11 @@ export async function getHistoricoPonto(): Promise<RegistroPonto[]> {
     .select('*')
     .order('data_registro', { ascending: false })
     .order('hora_entrada', { ascending: false });
+
+  // Se não for admin, filtra apenas os registros do próprio usuário
+  if (!isAdmin) {
+    query = query.eq('user_id', user.id);
+  }
 
   const { data, error } = await query;
 

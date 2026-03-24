@@ -1,4 +1,4 @@
-import { Image, Film, LayoutGrid, CheckCircle2, AlertCircle, Clock, Edit3 } from 'lucide-react'
+import { Image, Film, LayoutGrid, CheckCircle2, AlertCircle, Clock, Edit3, Send } from 'lucide-react'
 import { deriveStatus } from '../../lib/clientContents'
 import type { ClientContent } from './types'
 
@@ -13,6 +13,7 @@ const STATUS_ICON: Record<string, { icon: React.ReactNode; color: string }> = {
   em_aprovacao: { icon: <Clock className="w-3 h-3" />, color: 'text-amber-500' },
   ajuste:       { icon: <AlertCircle className="w-3 h-3" />, color: 'text-orange-500' },
   aprovado:     { icon: <CheckCircle2 className="w-3 h-3" />, color: 'text-emerald-500' },
+  postado:      { icon: <Send className="w-3 h-3" />, color: 'text-blue-500' },
 }
 
 interface ContentCardProps {

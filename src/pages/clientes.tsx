@@ -4,6 +4,7 @@ import { Plus, Search, ChevronDown } from 'lucide-react'
 import { ClientCard } from '../components/ClientCard'
 import { ClientModal } from '../components/clientes/ClientModal'
 import { fetchClients } from '../lib/clientes'
+import { fetchAllClientsContentStats, type ContentStats } from '../lib/clientContents'
 import type { Client } from '../components/clientes/types'
 
 type SortKey = 'nome' | 'recentes' | 'ativos'
@@ -11,6 +12,7 @@ type SortKey = 'nome' | 'recentes' | 'ativos'
 export default function ClientesPage() {
   const navigate = useNavigate()
   const [clients, setClients] = useState<Client[]>([])
+  const [statsMap, setStatsMap] = useState<Record<string, ContentStats>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('nome')
@@ -22,8 +24,12 @@ export default function ClientesPage() {
 
   async function loadClients() {
     setIsLoading(true)
-    const data = await fetchClients()
+    const [data, stats] = await Promise.all([
+      fetchClients(),
+      fetchAllClientsContentStats(),
+    ])
     setClients(data)
+    setStatsMap(stats)
     setIsLoading(false)
   }
 
@@ -157,7 +163,12 @@ export default function ClientesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-1">
           {filtered.map(client => (
-            <ClientCard key={client.id} client={client} onClick={goToDetail} />
+            <ClientCard
+              key={client.id}
+              client={client}
+              onClick={goToDetail}
+              stats={statsMap[client.id]}
+            />
           ))}
         </div>
       )}

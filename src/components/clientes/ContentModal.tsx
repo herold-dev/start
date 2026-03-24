@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   X, Trash2, Link as LinkIcon,
-  Play, Image as ImageIcon, Save,
+  Play, Image as ImageIcon, Save, Send,
   ChevronLeft, ChevronRight
 } from 'lucide-react'
 import type {
@@ -66,6 +66,7 @@ const STATUS_STYLE: Record<ContentStatus, { label: string; bg: string; text: str
   em_aprovacao: { label: 'Em Aprovação', bg: 'bg-amber-50',    text: 'text-amber-600',   border: 'border-amber-200' },
   ajuste:       { label: 'Ajuste',       bg: 'bg-orange-50',   text: 'text-orange-600',  border: 'border-orange-200' },
   aprovado:     { label: 'Aprovado',     bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-200' },
+  postado:      { label: 'Postado',      bg: 'bg-blue-50',     text: 'text-blue-700',    border: 'border-blue-200' },
 }
 
 function StatusBadge({ status, onChange }: { status: ContentStatus; onChange: (s: ContentStatus) => void }) {
@@ -447,6 +448,7 @@ export function ContentModal({
 
   const [activeTab, setActiveTab] = useState<EditorTab>('tema')
   const [isSaving, setIsSaving] = useState(false)
+  const [isMarkingPostado, setIsMarkingPostado] = useState(false)
 
   const isEditing = !!content
 
@@ -582,6 +584,26 @@ export function ContentModal({
       }
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleMarkPostado() {
+    if (!content) return
+    setIsMarkingPostado(true)
+    try {
+      const saved = await updateContent(content.id, {
+        status: 'postado',
+        tema_status: 'postado',
+        conteudo_status: 'postado',
+        midia_status: 'postado',
+        legenda_status: 'postado',
+      })
+      if (saved) {
+        onSave(saved)
+        onClose()
+      }
+    } finally {
+      setIsMarkingPostado(false)
     }
   }
 
@@ -820,6 +842,18 @@ export function ContentModal({
                   onChange={val => setTabStatus(activeTab, val)}
                 />
               </div>
+
+              {/* Botão Marcar como Postado — visível quando post está aprovado */}
+              {isEditing && content?.status === 'aprovado' && (
+                <button
+                  onClick={handleMarkPostado}
+                  disabled={isMarkingPostado || isSaving}
+                  className="px-4 py-2 sm:px-5 sm:py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-60 shadow-sm flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  {isMarkingPostado ? 'Salvando...' : 'Marcar como Postado'}
+                </button>
+              )}
 
               <button
                 onClick={handleSave}

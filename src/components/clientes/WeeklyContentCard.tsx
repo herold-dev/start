@@ -17,10 +17,11 @@ const CHANNEL_ICONS: Record<string, React.ReactNode> = {
 
 // Configuração visual de cada status baseada no mockup
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  rascunho:     { label: 'Rascunho', bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-l-gray-300' },
+  rascunho:     { label: 'Rascunho',     bg: 'bg-gray-100',   text: 'text-gray-600',   border: 'border-l-gray-300' },
   em_aprovacao: { label: 'Em Aprovação', bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-l-yellow-400' },
-  ajuste:       { label: 'Ajuste', bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-l-orange-400' },
-  aprovado:     { label: 'Aprovado', bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-l-emerald-500' },
+  ajuste:       { label: 'Ajuste',       bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-l-orange-400' },
+  aprovado:     { label: 'Aprovado',     bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-l-emerald-500' },
+  postado:      { label: 'Postado',      bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-l-blue-500' },
 }
 
 interface WeeklyContentCardProps {

@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Link as LinkIcon, Edit2, Trash2,
-  FileText, BarChart2, Lock
+  FileText, BarChart2, Lock, Send, CheckCircle2, Clock, FileStack
 } from 'lucide-react'
 import type { Client } from './types'
 import type { NoteTab } from './types'
+import type { ContentStats } from '../../lib/clientContents'
 
 export type ClientTab = 'conteudo' | 'metricas' | 'senhas' | NoteTab
 
@@ -14,6 +15,7 @@ interface ClientDetailHeaderProps {
   onTabChange: (tab: ClientTab) => void
   onEdit: () => void
   onDelete: () => void
+  stats?: ContentStats
 }
 
 const TABS: { id: ClientTab; label: string; icon: React.ReactNode }[] = [
@@ -32,6 +34,7 @@ export function ClientDetailHeader({
   onTabChange,
   onEdit,
   onDelete,
+  stats,
 }: ClientDetailHeaderProps) {
   const navigate = useNavigate()
   const isAtivo = client.status === 'Ativo'
@@ -110,6 +113,51 @@ export function ClientDetailHeader({
           </div>
         </div>
       </div>
+
+      {/* Stats indicadores */}
+      {stats && stats.total > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+              <FileStack className="w-4 h-4 text-gray-500" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Total</p>
+              <p className="text-xl font-bold text-gray-800 leading-none">{stats.total}</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Aprovados</p>
+              <p className="text-xl font-bold text-emerald-700 leading-none">{stats.aprovados}</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+              <Send className="w-4 h-4 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Postados</p>
+              <p className="text-xl font-bold text-blue-700 leading-none">{stats.postados}</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${stats.faltam > 0 ? 'bg-amber-50' : 'bg-gray-50'}`}>
+              <Clock className={`w-4 h-4 ${stats.faltam > 0 ? 'text-amber-500' : 'text-gray-400'}`} />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">A Postar</p>
+              <p className={`text-xl font-bold leading-none ${stats.faltam > 0 ? 'text-amber-700' : 'text-gray-400'}`}>{stats.faltam}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-1 overflow-x-auto pb-1 -mx-1 px-1">

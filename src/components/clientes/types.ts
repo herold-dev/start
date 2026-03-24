@@ -37,7 +37,7 @@ export type ClientInput = Omit<Client, 'id' | 'created_at'>
 /* ─── Content Calendar ────────────────────────────────────────────────── */
 
 export type ContentType = 'feed' | 'story' | 'feed_e_story'
-export type ContentStatus = 'rascunho' | 'em_aprovacao' | 'ajuste' | 'aprovado'
+export type ContentStatus = 'rascunho' | 'em_aprovacao' | 'ajuste' | 'aprovado' | 'postado'
 export type ContentChannel = 'video' | 'imagem'
 
 export interface ClientContent {
